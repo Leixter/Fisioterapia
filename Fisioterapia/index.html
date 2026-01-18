@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UDLA Fisioterapia - Demo Funcional</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --udla-red: #8B1D22;
+            --udla-black: #1A1A1A;
+            --bg-soft: #f0f2f5;
+        }
+
+        body { background-color: var(--bg-soft); font-family: 'Segoe UI', sans-serif; margin: 0; }
+        .navbar { background-color: var(--udla-red); padding: 1rem 5%; border-bottom: 4px solid var(--udla-black); }
+        .navbar-brand { font-weight: 800; color: white !important; }
+
+        .main-frame {
+            background-color: white;
+            border-radius: 24px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            padding: 60px;
+            margin: 50px auto;
+            max-width: 1200px;
+            min-height: 600px;
+            display: flex;
+            align-items: center;
+        }
+
+        .content-left h1 { font-size: 3.5rem; font-weight: 900; color: var(--udla-red); line-height: 1.1; }
+        .content-left p { font-size: 1.2rem; color: #555; margin-top: 25px; }
+
+        .booking-card {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            border: 1px solid #eee;
+            overflow: hidden;
+            width: 100%;
+            max-width: 420px;
+        }
+        .booking-header { background: var(--udla-red); color: white; padding: 15px; text-align: center; font-weight: bold; }
+        
+        .time-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 20px; }
+        .time-slot {
+            padding: 12px 5px;
+            border: 2px solid #f0f0f0;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: bold;
+            transition: 0.3s;
+            color: #444;
+        }
+        .time-slot:hover { border-color: var(--udla-red); color: var(--udla-red); }
+        .time-slot.selected { background: var(--udla-red); color: white !important; border-color: var(--udla-red); }
+        .time-slot.occupied { background: #f8f9fa; color: #ccc; cursor: not-allowed; border-color: #eee; text-decoration: line-through; }
+
+        .btn-udla { background: var(--udla-red); color: white; border: none; padding: 18px; border-radius: 10px; font-weight: bold; width: 100%; text-transform: uppercase; transition: 0.3s; }
+        .btn-udla:hover { background: var(--udla-black); transform: translateY(-2px); }
+        .btn-udla:disabled { background: #ccc; cursor: not-allowed; }
+
+        .hidden { display: none; }
+        footer { background: var(--udla-black); color: #777; text-align: center; padding: 20px; font-size: 0.8rem; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="container-fluid">
+            <a class="navbar-brand">UDLA Fisioterapia</a>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="main-frame row mx-auto">
+            
+            <div class="col-lg-7 content-left pe-lg-5">
+                <div id="info-1">
+                    <h1>Agenda tu cita de <br>Fisioterapia</h1>
+                    <p>Elige tu horario disponible. El sistema bloqueará la fecha automáticamente tras confirmar tu pago.</p>
+                </div>
+                <div id="info-2" class="hidden">
+                    <h1>BAC <br>de Pago Seguro</h1>
+                    <p>Horario seleccionado: <b id="txt-hora">--</b>. <br>Para efectos de esta demo, puedes ingresar cualquier dato en el formulario.</p>
+                </div>
+                <div id="info-3" class="hidden">
+                    <h1 style="color: #198754;">¡Proceso <br>Completado!</h1>
+                    <p>Se ha disparado el flujo hacia <b>Power Automate</b>. Revisa tu bandeja de entrada de Outlook para ver la confirmación.</p>
+                </div>
+            </div>
+
+            <div class="col-lg-5 d-flex justify-content-center">
+                
+                <div id="view-1" class="booking-card w-100">
+                    <div class="booking-header">SELECCIÓN DE TURNO</div>
+                    <div class="p-4">
+                        <label class="form-label small fw-bold">Fecha:</label>
+                        <input type="date" id="dateSelect" class="form-control mb-3" value="2026-01-19">
+                        
+                        <label class="form-label small fw-bold">Horarios:</label>
+                        <div class="time-grid">
+                            <div class="time-slot" onclick="markSelected(this)">08:00 AM</div>
+                            <div class="time-slot" onclick="markSelected(this)">09:00 AM</div>
+                            <div class="time-slot occupied">10:00 AM</div>
+                            <div class="time-slot" onclick="markSelected(this)">11:00 AM</div>
+                            <div class="time-slot" onclick="markSelected(this)">02:00 PM</div>
+                            <div class="time-slot" onclick="markSelected(this)">03:00 PM</div>
+                        </div>
+                        <button class="btn btn-udla mt-2" id="nextBtn" disabled onclick="changeStep(2)">Siguiente</button>
+                    </div>
+                </div>
+
+                <div id="view-2" class="booking-card w-100 hidden">
+                    <div class="booking-header" style="background: #8B1D22;">PASARELA DE PAGOS</div>
+                    <div class="p-4">
+                        <img src="bac_Logo.png" height="70" class="mx-auto d-block mb-4">
+                        
+                        <div class="mb-3">
+                            <label class="small fw-bold">Nombre del Paciente:</label>
+                            <input type="text" id="nameInp" class="form-control" placeholder="Ej: Francisco Mejia">
+                        </div>
+                        <div class="mb-3">
+                            <label class="small fw-bold">Correo de Confirmación:</label>
+                            <input type="email" id="emailInp" class="form-control" placeholder="tu-correo@udla.edu.ec">
+                        </div>
+
+                        <hr>
+                        <p class="text-muted x-small text-center mb-3">Simulación de tarjeta (No se valida el número)</p>
+                        <input type="text" class="form-control mb-2" placeholder="XXXX XXXX XXXX XXXX">
+                        <div class="row g-2 mb-4">
+                            <div class="col"><input type="text" class="form-control" placeholder="MM/AA"></div>
+                            <div class="col"><input type="text" class="form-control" placeholder="CVV"></div>
+                        </div>
+                        <button class="btn btn-udla" id="payBtn" onclick="processReservation()">Finalizar y Enviar Correo</button>
+                    </div>
+                </div>
+
+                <div id="view-3" class="booking-card w-100 hidden p-5 text-center">
+                    <div style="font-size: 80px; color: #198754;" class="mb-3">✓</div>
+                    <h4 class="fw-bold">Reserva Exitosa</h4>
+                    <p class="text-muted small">El mensaje ha sido enviado a tu Outlook.</p>
+                    <button class="btn btn-outline-danger w-100" onclick="location.reload()">Reiniciar Demo</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <footer>© 2026 Universidad de las Américas</footer>
+
+    <script>
+        let selectedTime = "";
+
+        function markSelected(el) {
+            if(el.classList.contains('occupied')) return;
+            document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
+            el.classList.add('selected');
+            selectedTime = el.innerText;
+            document.getElementById('nextBtn').disabled = false;
+            document.getElementById('txt-hora').innerText = selectedTime;
+        }
+
+        function changeStep(s) {
+            document.querySelectorAll('.booking-card, .content-left > div').forEach(el => el.classList.add('hidden'));
+            document.getElementById('view-' + s).classList.remove('hidden');
+            document.getElementById('info-' + s).classList.remove('hidden');
+        }
+
+        async function processReservation() {
+            const name = document.getElementById('nameInp').value;
+            const email = document.getElementById('emailInp').value;
+            const fecha = document.getElementById('dateSelect').value;
+            const btn = document.getElementById('payBtn');
+
+            if(!name || !email) {
+                alert("Ingresa un nombre y correo para la confirmación.");
+                return;
+            }
+
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Procesando...';
+            btn.disabled = true;
+
+            // URL de tu flujo de Power Automate
+            const flowURL = "PEGA_AQUI_TU_URL_DE_POWER_AUTOMATE";
+
+            try {
+                await fetch(flowURL, { 
+                    method: 'POST', 
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ 
+                        nombre: name, 
+                        correo: email, 
+                        hora: selectedTime, 
+                        fecha: fecha 
+                    }) 
+                });
+                changeStep(3); // Cambia a la pantalla de éxito
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Hubo un fallo al conectar con el servidor.");
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
